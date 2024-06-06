@@ -17,7 +17,7 @@ void dumpScope();
 
 void pushFunctionParm(ObjectType variableType, char *variableName,
                       int variableFlag);
-void genFunctionJNI(ObjectType returnType, char *funcName);
+
 void pushExpression(Object *out);
 Object *popExpression();
 void castingVariableHelper(ObjectType variableType);
@@ -25,6 +25,7 @@ void defineVariableHelper(ObjectType variableType);
 void insertVariable(char *variableName, ObjectType variableType);
 void pushFunInParm(Object *variable);
 void createFunction(ObjectType variableType, char *funcName);
+void createMainFunction();
 
 Object *findVariable(char *variableName);
 Object *createVariable(ObjectType variableType, char *variableName,

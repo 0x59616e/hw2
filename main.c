@@ -98,67 +98,6 @@ char *JNIHelper(ObjectType type, int isArray) {
   return result;
 }
 
-void genFunctionJNI(ObjectType returnType, char *funcName) {
-  char *funcSig = (char *)malloc(2 * sizeof(char));
-  if (!funcSig) {
-    puts("ddd");
-    return;
-  }
-  strcpy(funcSig, "(");
-
-  while (functionParmQueue->size > 0) {
-    ObjectPair *pair = (ObjectPair *)popQueue(functionParmQueue);
-    char *paramSig = JNIHelper(pair->type, pair->isArray);
-    funcSig = (char *)realloc(
-        funcSig, (strlen(funcSig) + strlen(paramSig) + 1) * sizeof(char));
-    if (!funcSig) {
-      puts("ddd");
-      return;
-    }
-    strcat(funcSig, paramSig);
-    free(paramSig);
-    free(pair);
-  }
-
-  funcSig = (char *)realloc(funcSig, (strlen(funcSig) + 2) * sizeof(char));
-  if (!funcSig) {
-    puts("ddd");
-    return;
-  }
-  strcat(funcSig, ")");
-
-  char *returnSig = JNIHelper(returnType, 0);
-  funcSig = (char *)realloc(funcSig, (strlen(funcSig) + strlen(returnSig) + 1) *
-                                         sizeof(char));
-  if (!funcSig) {
-    puts("ddd");
-    return;
-  }
-  strcat(funcSig, returnSig);
-  free(returnSig);
-
-  strcpy(lastObject(scopeTable[scopeLevel - 1])->symbol->func_sig, funcSig);
-  free(funcSig);
-}
-
-/*
-void genFunctionJNI(ObjectType returnType, char *funcName) {
-  string funcSig = "";
-  funcSig += "(";
-  while (functionParmQueue->size > 0) {
-    ObjectPair *pair = (ObjectPair *)popQueue(functionParmQueue);
-
-    funcSig += JNIHelper(pair->type, pair->isArray);
-  }
-  funcSig += ")";
-  // TODO
-  funcSig += JNIHelper(returnType, false);
-
-  strcpy(lastObject(scopeTable[scopeLevel - 1])->symbol->func_sig,
-         funcSig.c_str());
-}
-*/
-
 void pushFunctionParm(ObjectType variableType, char *variableName,
                       int variableFlag) {
   pushQueue(functionParmQueue,
@@ -269,13 +208,13 @@ Object *createVariable(ObjectType variableType, char *variableName,
   return NULL;
 }
 
-void createFunction(ObjectType variableType, char *funcName) {
-  printf("func: %s\n", funcName);
-  /* printf("funcxxx: %s\n", objectTypeName[variableType]); */
-
-  insertVariable(funcName, OBJECT_TYPE_FUNCTION);
-  lastObject(scopeTable[scopeLevel])->tmpType = variableType;
-  /* scopeTable[scopeLevel]->objectList.back()->tmpType = variableType; */
+void createMainFunction() {
+  printf("func: main\n");
+  insertVariable((char *)"main", OBJECT_TYPE_FUNCTION);
+  Object *tmp = lastObject(scopeTable[0]);
+  tmp->tmpType = OBJECT_TYPE_FUNCTION;
+  char *funcProto = (char *)"([Ljava/lang/String;)I";
+  strcpy(tmp->symbol->func_sig, funcProto);
 }
 
 void debugPrintInst(char instc, Object *a, Object *b, Object *out) {}

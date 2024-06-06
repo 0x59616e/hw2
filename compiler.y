@@ -65,14 +65,14 @@ GlobalStmt
 
 /* Function */
 FunctionDefStmt
-    : VARIABLE_T IDENT { createFunction($<var_type>1, $<s_var>2); } '(' { pushScope(); } FunctionParameterStmtList ')' {genFunctionJNI($<var_type>1, $<s_var>2);} '{' StmtList '}' { dumpScope(); }
+    : VARIABLE_T IDENT { createMainFunction(); } '(' { pushScope(); } parameter_list ')' '{' StmtList '}' { dumpScope(); }
 ;
-FunctionParameterStmtList 
-    : FunctionParameterStmtList ',' FunctionParameterStmt
-    | FunctionParameterStmt
+parameter_list
+    : parameter_list ',' parameter
+    | parameter
     | /* Empty function parameter */
 ;
-FunctionParameterStmt
+parameter
     : VARIABLE_T IDENT { pushFunctionParm($<var_type>1, $<s_var>2, VAR_FLAG_DEFAULT); }
     | VARIABLE_T IDENT '[' ']' { pushFunctionParm($<var_type>1, $<s_var>2, VAR_FLAG_ARRAY); }
 ;
