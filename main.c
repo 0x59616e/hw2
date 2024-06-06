@@ -1,17 +1,10 @@
-/* #include <iostream> */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "compiler_common.h"
 #include "main.h"
-#include "queue.c"
-#include <queue>
-#include <utility>
 
-#define debug printf("%s:%d: ############### debug\n", __FILE__, __LINE__)
-
-#define toupper(_char) (_char - (char)32)
 using namespace std;
 
 const char *objectTypeName[] = {
@@ -24,12 +17,19 @@ typedef struct {
   int32_t size = 0;
 } SymbolTable;
 
+typedef struct {
+  void *data[2000];
+  int head = 0;
+  int tail = 0;
+} Queue;
+
 SymbolTable symbolTable[100];
 
 /* queue<string> stdoutQueue; */
-Queue *stdoutQueue = createQueue();
-Queue *expressionQueue = createQueue();
-Queue *functionParmQueue = createQueue();
+Queue stdoutQueue;
+Queue expressionQueue;
+Queue functionParmQueue;
+
 /* queue<Object *> expressionQueue; */
 typedef struct ObjectPair {
   ObjectType type;
@@ -47,17 +47,17 @@ int variableAddress = 0;
 ObjectType variableIdentType;
 
 void pushMainFunctionParm() {
-  pushQueue(functionParmQueue, new ObjectPair{OBJECT_TYPE_FUNCTION, true});
+  functionParmQueue.data[functionParmQueue.tail++] =
+      new ObjectPair{OBJECT_TYPE_FUNCTION, true};
   insertVariable((char *)"argv", OBJECT_TYPE_STR);
 }
 
-void pushExpression(Object *out) { pushQueue(expressionQueue, (void *)out); }
+void pushExpression(Object *out) {
+  expressionQueue.data[expressionQueue.tail++] = (void *)out;
+}
 
 Object *popExpression() {
-  if (expressionQueue->size == 0)
-    return NULL;
-
-  return (Object *)popQueue(expressionQueue);
+  return (Object *)expressionQueue.data[expressionQueue.head++];
 }
 
 void insertVariable(ObjectType variableType) {
@@ -169,16 +169,15 @@ Object *findVariable(char *variableName) {
 }
 
 void pushFunInParm(Object *variable) {
-  pushQueue(stdoutQueue, (void *)objectTypeName[variable->type]);
+  stdoutQueue.data[stdoutQueue.tail++] = (void *)objectTypeName[variable->type];
 }
 
 void stdoutPrint() {
   printf("cout ");
-  /* cout << "cout "; */
 
-  while (stdoutQueue->size > 0) {
-    printf("%s%s", (char *)popQueue(stdoutQueue),
-           (stdoutQueue->size == 1 ? "\n" : " "));
+  while (stdoutQueue.head != stdoutQueue.tail) {
+    printf("%s%s", (char *)stdoutQueue.data[stdoutQueue.head++],
+           (stdoutQueue.tail == stdoutQueue.head + 1 ? "\n" : " "));
   }
 }
 
