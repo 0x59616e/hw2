@@ -19,7 +19,6 @@ void pushMainFunctionParm();
 
 void pushExpression(Object *out);
 Object *popExpression();
-void castingVariableHelper(ObjectType variableType);
 void insertVariable(ObjectType variableType);
 void insertVariable(char *variableName, ObjectType variableType);
 void pushFunInParm(Object *variable);

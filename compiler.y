@@ -35,7 +35,7 @@
 %token <f_var> FLOAT_LIT
 %token <s_var> STR_LIT
 /* Nonterminal with return, which need to sepcify type */
-%type <object_val> Expression LogicOrExpression LogicAndExpression BitwiseOrExpression BitwiseXorExpression BitwiseAndExpression EquExpression RelationalExpression ShiftExpression AdditiveExpression MultiExpression CastExpression UnaryExpression LogicalNotExpression FuncCallExpression PrimaryExpression ScalarExpression LvalueExpression
+%type <object_val> Expression LogicOrExpression LogicAndExpression BitwiseOrExpression BitwiseXorExpression BitwiseAndExpression EquExpression RelationalExpression ShiftExpression AdditiveExpression MultiExpression UnaryExpression LogicalNotExpression FuncCallExpression PrimaryExpression ScalarExpression LvalueExpression
 
 
 
@@ -250,17 +250,9 @@ AdditiveExpression
 ;
 
 MultiExpression
-    : MultiExpression MUL CastExpression { puts("MUL"); $$ = $3; }
-    | MultiExpression DIV CastExpression { puts("DIV"); $$ = $3; }
-    | MultiExpression REM CastExpression { puts("REM"); $$ = $3; }
-    | CastExpression { $$ = $1; }
-;
-
-CastExpression
-    : '(' VARIABLE_T ')' UnaryExpression {
-      castingVariableHelper($<var_type>2);
-      $$.type = $<var_type>2;
-    }
+    : MultiExpression MUL UnaryExpression { puts("MUL"); $$ = $3; }
+    | MultiExpression DIV UnaryExpression { puts("DIV"); $$ = $3; }
+    | MultiExpression REM UnaryExpression { puts("REM"); $$ = $3; }
     | UnaryExpression { $$ = $1; }
 ;
 

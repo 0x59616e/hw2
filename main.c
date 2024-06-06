@@ -71,14 +71,6 @@ void insertVariable(ObjectType variableType) {
   }
 }
 
-void castingVariableHelper(ObjectType variableType) {
-  // function's return type is in tmpType
-  // Note: casting Type is also in
-  printf("Cast to %s\n", objectTypeName[variableType]);
-  lastObject(scopeTable[scopeLevel])->tmpType = variableType;
-  /* scopeTable[scopeLevel]->objectList.back()->tmpType = variableType; */
-}
-
 void insertVariable(char *variableName, ObjectType variableType) {
   SymbolData *symbolData = new SymbolData{
       .name = variableName,
