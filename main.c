@@ -65,7 +65,7 @@ Object *popExpression() {
 void insertVariable(ObjectType variableType) {
   for (int i = 0; i < scopeTable[scopeLevel]->objectListSize; i++) {
     Object *x = scopeTable[scopeLevel]->objectList[i];
-    if (x->type == OBJECT_TYPE_UNDEFINED || x->type == OBJECT_TYPE_AUTO) {
+    if (x->type == OBJECT_TYPE_UNDEFINED) {
       x->type = variableType;
     }
   }
