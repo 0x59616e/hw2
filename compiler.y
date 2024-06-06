@@ -65,11 +65,25 @@ GlobalStmt
 
 /* Function */
 FunctionDefStmt
-    : VARIABLE_T IDENT { createMainFunction(); } '(' { pushScope(); } parameter ')' '{' StmtList '}' { dumpScope(); }
+    : VARIABLE_T IDENT { createMainFunction(); } '(' { pushScope(); } parameter ')' compound_statement { dumpScope(); }
 ;
 
 parameter
     : VARIABLE_T IDENT '[' ']' { pushMainFunctionParm(); }
+;
+
+compound_statement
+    : '{' '}'
+    | '{' block_item_list '}'
+;
+
+block_item_list
+    : block_item
+    | block_item_list block_item
+;
+
+block_item
+    : StmtList
 ;
 
 /* Scope */
