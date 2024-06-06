@@ -95,20 +95,9 @@ Stmt
     : ';' {printf(";;;;\n");}
     | GeneralStmt ';'
     | AssignmentStmt ';'
-    | IfStmt
     | declaration ';'
     | WhileStmt
     | ForStmt
-;
-
-IfStmt
-    : IF '(' Expression ')' { puts("IF"); pushScope(); } '{' StmtList '}' { dumpScope(); } ElseStmt
-    | IF '(' Expression ')' { puts("IF"); } Stmt
-;
-
-ElseStmt
-    : ELSE { puts("ELSE"); pushScope(); } '{' StmtList '}' { dumpScope();}
-    | /* Empty else */
 ;
 
 WhileStmt
