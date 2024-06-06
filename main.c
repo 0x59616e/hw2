@@ -62,18 +62,13 @@ Object *popExpression() {
   /* return tmp; */
 }
 
-void defineVariableHelper(ObjectType variableType) {
+void insertVariable(ObjectType variableType) {
   for (int i = 0; i < scopeTable[scopeLevel]->objectListSize; i++) {
     Object *x = scopeTable[scopeLevel]->objectList[i];
     if (x->type == OBJECT_TYPE_UNDEFINED || x->type == OBJECT_TYPE_AUTO) {
       x->type = variableType;
     }
   }
-  /* for (Object *x : scopeTable[scopeLevel]->objectList) { */
-  /*   if (x->type == OBJECT_TYPE_UNDEFINED || x->type == OBJECT_TYPE_AUTO) { */
-  /*     x->type = variableType; */
-  /*   } */
-  /* } */
 }
 
 void castingVariableHelper(ObjectType variableType) {

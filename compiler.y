@@ -59,7 +59,7 @@ GlobalStmtList
 ;
 
 GlobalStmt
-    : DefineVariableStmtList ';'
+    : declaration ';'
     | FunctionDefStmt
 ;
 
@@ -96,7 +96,7 @@ Stmt
     | GeneralStmt ';'
     | AssignmentStmt ';'
     | IfStmt
-    | DefineVariableStmt ';'
+    | declaration ';'
     | WhileStmt
     | ForStmt
 ;
@@ -119,26 +119,26 @@ ForStmt
     : FOR { puts("FOR"); pushScope(); } '(' ForForeStmt ')' '{' StmtList '}' { dumpScope();}
 
 ForForeStmt
-    : DefineVariableStmt ':' Expression {
-      defineVariableHelper($3.type);
+    : declaration ':' Expression {
+      insertVariable($3.type);
     }
     | ForInitStmt ';' Expression ';' AssignmentStmt
 
 ForInitStmt
-    : DefineVariableStmt
+    : declaration
     | AssignmentStmt
     | 
 ;
 
-DefineVariableStmt
-    : VARIABLE_T DefineVariableStmtList { defineVariableHelper($<var_type>1); };
+declaration
+    : VARIABLE_T init_declaration_list { insertVariable($<var_type>1); };
 
-DefineVariableStmtList
-    : DefineVariableStmtList ',' RPARTDefineVariableStmt
-    | RPARTDefineVariableStmt
+init_declaration_list
+    : init_declaration_list ',' init_declarator
+    | init_declarator
 
 
-RPARTDefineVariableStmt
+init_declarator
     : IDENT { insertVariable($<s_var>1, OBJECT_TYPE_UNDEFINED); }
     | IDENT VAL_ASSIGN Expression { insertVariable($<s_var>1, $3.type); }
     | IDENT '[' ScalarExpression ']' '[' ScalarExpression ']' {
