@@ -6,7 +6,6 @@
 #include "compiler_common.h"
 #include "main.h"
 #include "queue.c"
-#include "scope_table.c"
 #include <queue>
 #include <utility>
 
@@ -20,7 +19,12 @@ const char *objectTypeName[] = {
     "float",     "double", "bool", "string", "function",
 };
 
-Node *scopeTable[1 << 10];
+typedef struct {
+  Object *objects[100] = {NULL};
+  int32_t size = 0;
+} SymbolTable;
+
+SymbolTable symbolTable[100];
 
 /* queue<string> stdoutQueue; */
 Queue *stdoutQueue = createQueue();
@@ -54,17 +58,11 @@ Object *popExpression() {
     return NULL;
 
   return (Object *)popQueue(expressionQueue);
-
-  /* if (expressionQueue.empty()) */
-  /*   return NULL; */
-  /* Object *tmp = expressionQueue.front(); */
-  /* expressionQueue.pop(); */
-  /* return tmp; */
 }
 
 void insertVariable(ObjectType variableType) {
-  for (int i = 0; i < scopeTable[scopeLevel]->objectListSize; i++) {
-    Object *x = scopeTable[scopeLevel]->objectList[i];
+  for (int i = 0; i < symbolTable[scopeLevel].size; i++) {
+    Object *x = symbolTable[scopeLevel].objects[i];
     if (x->type == OBJECT_TYPE_UNDEFINED) {
       x->type = variableType;
     }
@@ -74,7 +72,7 @@ void insertVariable(ObjectType variableType) {
 void insertVariable(char *variableName, ObjectType variableType) {
   SymbolData *symbolData = new SymbolData{
       .name = variableName,
-      .index = (int32_t)scopeTable[scopeLevel]->objectListSize,
+      .index = symbolTable[scopeLevel].size,
       .addr = !scopeLevel ? -1 : variableAddress,
       .lineno = yylineno,
       .func_sig = new char[50],
@@ -89,22 +87,14 @@ void insertVariable(char *variableName, ObjectType variableType) {
       .symbol = symbolData,
   };
 
-  addObjectToList(scopeTable[scopeLevel], object);
-  /* scopeTable[scopeLevel]->objectList.push_back(object); */
+  symbolTable[scopeLevel].objects[symbolTable[scopeLevel].size++] = object;
+
   printf("> Insert `%s` (addr: %d) to scope level %d\n", variableName,
          !scopeLevel ? -1 : variableAddress++, scopeLevel);
 }
 
 void pushScope() {
-  /* Node *node = new Node{ */
-  /*     .scopeLevel = ++scopeLevel, */
-  /* }; */
-  Node *node = createNode(++scopeLevel);
-
-  scopeTable[scopeLevel] = node;
-
-  /* scopeTable.push_back(node); */
-  printf("> Create symbol table (scope level %d)\n", scopeLevel);
+  printf("> Create symbol table (scope level %d)\n", ++scopeLevel);
 }
 
 void dumpScope() {
@@ -112,33 +102,22 @@ void dumpScope() {
   printf("> Dump symbol table (scope level: %d)\n", scopeLevel);
   printf("Index     Name                Type      Addr      Lineno    Func_sig "
          " \n");
-  for (int i = 0; i < scopeTable[scopeLevel]->objectListSize; i++) {
-    Object *x = scopeTable[scopeLevel]->objectList[i];
+  for (int i = 0; i < symbolTable[scopeLevel].size; i++) {
+    Object *x = symbolTable[scopeLevel].objects[i];
     printf("%-9d %-19s %-9s %-9ld %-9d %-10s\n", x->symbol->index,
            x->symbol->name, objectTypeName[x->type], x->symbol->addr,
            x->symbol->lineno, x->symbol->func_sig);
   }
-  /* for (Object *x : scopeTable[scopeLevel]->objectList) { */
-  /*   printf("%-9d %-19s %-9s %-9ld %-9d %-10s\n", x->symbol->index, */
-  /*          x->symbol->name, objectTypeName[x->type], x->symbol->addr, */
-  /*          x->symbol->lineno, x->symbol->func_sig); */
-  /* } */
-  free(scopeTable[scopeLevel]->objectList);
-  free(scopeTable[scopeLevel]);
 
-  /* scopeTable.pop_back(); */
+  symbolTable[scopeLevel].size = 0;
+
   scopeLevel--;
-}
-
-Object *createVariable(ObjectType variableType, char *variableName,
-                       int variableFlag) {
-  return NULL;
 }
 
 void createMainFunction() {
   printf("func: main\n");
   insertVariable((char *)"main", OBJECT_TYPE_FUNCTION);
-  Object *tmp = lastObject(scopeTable[0]);
+  Object *tmp = symbolTable[0].objects[symbolTable[0].size - 1];
   tmp->tmpType = OBJECT_TYPE_FUNCTION;
   char *funcProto = (char *)"([Ljava/lang/String;)I";
   strcpy(tmp->symbol->func_sig, funcProto);
@@ -179,28 +158,18 @@ bool objectCast(ObjectType variableType, Object *dest, Object *out) {
 
 Object *findVariable(char *variableName) {
   for (int i = scopeLevel; i >= 0; i--) {
-    for (int j = 0; j < scopeTable[i]->objectListSize; j++) {
-      Object *x = scopeTable[i]->objectList[j];
+    for (int j = 0; j < symbolTable[i].size; j++) {
+      Object *x = symbolTable[i].objects[j];
       if (strcmp(x->symbol->name, variableName) == 0) {
         return x;
       }
     }
-    /* for (Object *x : scopeTable[i]->objectList) { */
-    /*   if (strcmp(x->symbol->name, variableName) == 0) { */
-    /*     return x; */
-    /*   } */
-    /* } */
   }
   return NULL;
 }
 
 void pushFunInParm(Object *variable) {
-
   pushQueue(stdoutQueue, (void *)objectTypeName[variable->type]);
-  /* stdoutQueue.push(objectTypeName[variable->type]); */
-
-  /* printf("pushFunInParm: %s\n", variable->symbol->name); */
-  /* insert_variable(variable->symbol->name, variable->type); */
 }
 
 void stdoutPrint() {
@@ -210,16 +179,7 @@ void stdoutPrint() {
   while (stdoutQueue->size > 0) {
     printf("%s%s", (char *)popQueue(stdoutQueue),
            (stdoutQueue->size == 1 ? "\n" : " "));
-    /* printf("stdoutQueue size: %d\n", stdoutQueue->size); */
-    /* cout << (char *)popQueue(stdoutQueue) << (!stdoutQueue->size ? "" : " ");
-     */
   }
-  /* while (stdoutQueue.size() > 0) { */
-  /*   cout << stdoutQueue.front() << (stdoutQueue.size() == 1 ? "" : " "); */
-  /*   stdoutQueue.pop(); */
-  /* } */
-  /* printf("\n"); */
-  /* cout << endl; */
 }
 
 int main(int argc, char *argv[]) {
