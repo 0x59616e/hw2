@@ -15,8 +15,7 @@ int yylex_destroy();
 void pushScope();
 void dumpScope();
 
-void pushFunctionParm(ObjectType variableType, char *variableName,
-                      int variableFlag);
+void pushMainFunctionParm();
 
 void pushExpression(Object *out);
 Object *popExpression();

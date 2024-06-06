@@ -65,16 +65,11 @@ GlobalStmt
 
 /* Function */
 FunctionDefStmt
-    : VARIABLE_T IDENT { createMainFunction(); } '(' { pushScope(); } parameter_list ')' '{' StmtList '}' { dumpScope(); }
+    : VARIABLE_T IDENT { createMainFunction(); } '(' { pushScope(); } parameter ')' '{' StmtList '}' { dumpScope(); }
 ;
-parameter_list
-    : parameter_list ',' parameter
-    | parameter
-    | /* Empty function parameter */
-;
+
 parameter
-    : VARIABLE_T IDENT { pushFunctionParm($<var_type>1, $<s_var>2, VAR_FLAG_DEFAULT); }
-    | VARIABLE_T IDENT '[' ']' { pushFunctionParm($<var_type>1, $<s_var>2, VAR_FLAG_ARRAY); }
+    : VARIABLE_T IDENT '[' ']' { pushMainFunctionParm(); }
 ;
 
 /* Scope */

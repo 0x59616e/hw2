@@ -42,13 +42,9 @@ int funcLineNo = 0;
 int variableAddress = 0;
 ObjectType variableIdentType;
 
-void pushFunctionParm(ObjectType variableType, char *variableName,
-                      int variableFlag) {
-  pushQueue(functionParmQueue,
-            new ObjectPair{variableType, variableFlag == VAR_FLAG_ARRAY});
-  /* functionParmQueue.push( */
-  /*     make_pair(variableType, variableFlag == VAR_FLAG_ARRAY)); */
-  insertVariable(variableName, variableType);
+void pushMainFunctionParm() {
+  pushQueue(functionParmQueue, new ObjectPair{OBJECT_TYPE_FUNCTION, true});
+  insertVariable((char *)"argv", OBJECT_TYPE_STR);
 }
 
 void pushExpression(Object *out) { pushQueue(expressionQueue, (void *)out); }
