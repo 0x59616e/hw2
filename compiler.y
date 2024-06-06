@@ -35,7 +35,7 @@
 %token <f_var> FLOAT_LIT
 %token <s_var> STR_LIT
 /* Nonterminal with return, which need to sepcify type */
-%type <object_val> Expression LogicOrExpression LogicAndExpression BitwiseOrExpression BitwiseXorExpression BitwiseAndExpression EquExpression RelationalExpression ShiftExpression AdditiveExpression MultiExpression UnaryExpression LogicalNotExpression FuncCallExpression PrimaryExpression ScalarExpression LvalueExpression
+%type <object_val> Expression LogicOrExpression LogicAndExpression BitwiseOrExpression BitwiseXorExpression BitwiseAndExpression EquExpression RelationalExpression ShiftExpression AdditiveExpression MultiExpression UnaryExpression LogicalNotExpression PrimaryExpression ScalarExpression LvalueExpression
 
 
 
@@ -152,7 +152,6 @@ GeneralStmt
     | RETURN { puts("RETURN"); }
     | BREAK { puts("BREAK"); }
     | CONTINUE { puts("CONTINUE"); }
-    | FuncCallExpression
 ;
 
 CoutParmListStmt
@@ -254,17 +253,7 @@ UnaryExpression
 LogicalNotExpression
     : BNT LogicalNotExpression { puts("BNT"); $$ = $2; }
     | BAN LogicalNotExpression { puts("BAN"); $$ = $2; }
-    | FuncCallExpression { $$ = $1; }
     | PrimaryExpression { $$ = $1; }
-;
-
-FuncCallExpression
-    : IDENT '(' ExpressionList ')' {
-      Object *obj = findVariable($1);
-      printf("IDENT (name=%s, address=%d)\n", $1, obj->symbol->addr);
-      printf("call: %s%s\n", obj->symbol->name, obj->symbol->func_sig);
-      $$.type = obj->tmpType;
-    }
 ;
 
 PrimaryExpression
