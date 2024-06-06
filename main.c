@@ -42,62 +42,6 @@ int funcLineNo = 0;
 int variableAddress = 0;
 ObjectType variableIdentType;
 
-char *JNIHelper(ObjectType type, int isArray) {
-  // 初始化結果字符串
-  char *result;
-  if (isArray) {
-    result = (char *)malloc(2 * sizeof(char)); // 分配空間以容納 '[' 和 '\0'
-    if (!result) {
-      return NULL; // 分配失敗
-    }
-    strcpy(result, "[");
-  } else {
-    result = (char *)malloc(1 * sizeof(char)); // 分配空間以容納 '\0'
-    if (!result) {
-      return NULL; // 分配失敗
-    }
-    strcpy(result, "");
-  }
-
-  // 根據類型追加字符串
-  const char *typeStr;
-  switch (type) {
-  case OBJECT_TYPE_INT:
-    typeStr = "I";
-    break;
-  case OBJECT_TYPE_LONG:
-    typeStr = "J";
-    break;
-  case OBJECT_TYPE_FLOAT:
-    typeStr = "F";
-    break;
-  case OBJECT_TYPE_DOUBLE:
-    typeStr = "D";
-    break;
-  case OBJECT_TYPE_BOOL:
-    typeStr = "B";
-    break;
-  case OBJECT_TYPE_VOID:
-    typeStr = "V";
-    break;
-  case OBJECT_TYPE_STR:
-    typeStr = "Ljava/lang/String;";
-    break;
-  default:
-    typeStr = "";
-  }
-
-  // 追加類型字符串
-  result = (char *)realloc(result, (strlen(result) + strlen(typeStr) + 1) *
-                                       sizeof(char));
-  if (!result) {
-    return NULL; // 分配失敗
-  }
-  strcat(result, typeStr);
-
-  return result;
-}
-
 void pushFunctionParm(ObjectType variableType, char *variableName,
                       int variableFlag) {
   pushQueue(functionParmQueue,
