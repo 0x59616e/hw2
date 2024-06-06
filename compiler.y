@@ -35,7 +35,7 @@
 %token <f_var> FLOAT_LIT
 %token <s_var> STR_LIT
 /* Nonterminal with return, which need to sepcify type */
-%type <object_val> Expression LogicOrExpression LogicAndExpression BitwiseOrExpression BitwiseXorExpression BitwiseAndExpression EquExpression RelationalExpression ShiftExpression AdditiveExpression MultiExpression UnaryExpression LogicalNotExpression PrimaryExpression ScalarExpression LvalueExpression
+%type <object_val> expression logical_or_expression logical_and_expression bitwise_or_expression bitwise_xor_expression bitwise_and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression unary_expression logical_not_expression primary_expression
 
 
 
@@ -94,28 +94,23 @@ StmtList
 Stmt
     : ';' {printf(";;;;\n");}
     | GeneralStmt ';'
-    | AssignmentStmt ';'
+    | assignment_expression ';'
     | declaration ';'
-    | WhileStmt
-    | ForStmt
+    | while_statement
+    | for_statement
 ;
 
-WhileStmt
-    : WHILE { puts("WHILE"); } '(' Expression ')' { pushScope(); } '{' StmtList '}' { dumpScope();}
+while_statement
+    : WHILE { puts("WHILE"); } '(' expression ')' { pushScope(); } '{' StmtList '}' { dumpScope();}
 ;
 
-ForStmt
-    : FOR { puts("FOR"); pushScope(); } '(' ForForeStmt ')' '{' StmtList '}' { dumpScope();}
+for_statement
+    : FOR { puts("FOR"); pushScope(); } '(' for_init_statement ';' expression ';' assignment_expression ')' '{' StmtList '}' { dumpScope();}
 
-ForForeStmt
-    : declaration ':' Expression {
-      insertVariable($3.type);
-    }
-    | ForInitStmt ';' Expression ';' AssignmentStmt
 
-ForInitStmt
+for_init_statement
     : declaration
-    | AssignmentStmt
+    | assignment_expression
     | 
 ;
 
@@ -129,160 +124,152 @@ init_declaration_list
 
 init_declarator
     : IDENT { insertVariable($<s_var>1, OBJECT_TYPE_UNDEFINED); }
-    | IDENT VAL_ASSIGN Expression { insertVariable($<s_var>1, $3.type); }
-    | IDENT '[' ScalarExpression ']' '[' ScalarExpression ']' {
+    | IDENT VAL_ASSIGN expression { insertVariable($<s_var>1, $3.type); }
+    | IDENT '[' primary_expression ']' '[' primary_expression ']' {
       insertVariable($<s_var>1, OBJECT_TYPE_UNDEFINED);
     }
-    | IDENT '[' ScalarExpression ']' VAL_ASSIGN '{' ExpressionList '}' {
-      int cnt = 0;
+    | IDENT '[' primary_expression ']' VAL_ASSIGN '{' expressions '}' {
+      int counter = 0;
       ObjectType type = OBJECT_TYPE_UNDEFINED;
       Object *obj = NULL;
       while (obj = popExpression()) {
         type = obj->type > type ? obj->type : type;
-        cnt++;
+        counter++;
       }
-      printf("create array: %d\n", cnt);
+      printf("create array: %d\n", counter);
       insertVariable($<s_var>1, type);
     }
 ;
 
 GeneralStmt
     : COUT CoutParmListStmt { stdoutPrint(); }
-    | RETURN Expression { puts("RETURN"); }
+    | RETURN expression { puts("RETURN"); }
     | RETURN { puts("RETURN"); }
     | BREAK { puts("BREAK"); }
     | CONTINUE { puts("CONTINUE"); }
 ;
 
 CoutParmListStmt
-    : CoutParmListStmt SHL Expression { pushFunInParm(&$<object_val>3); }
-    | SHL Expression { pushFunInParm(&$<object_val>2); }
+    : CoutParmListStmt SHL expression { pushFunInParm(&$<object_val>3); }
+    | SHL expression { pushFunInParm(&$<object_val>2); }
 ;
 
 
-AssignmentStmt
-    : LvalueExpression VAL_ASSIGN Expression { printf("EQL_ASSIGN\n"); }
-    | LvalueExpression ADD_ASSIGN Expression { printf("ADD_ASSIGN\n"); }
-    | LvalueExpression SUB_ASSIGN Expression { printf("SUB_ASSIGN\n"); }
-    | LvalueExpression MUL_ASSIGN Expression { printf("MUL_ASSIGN\n"); }
-    | LvalueExpression DIV_ASSIGN Expression { printf("DIV_ASSIGN\n"); }
-    | LvalueExpression REM_ASSIGN Expression { printf("REM_ASSIGN\n"); }
-    | LvalueExpression SHR_ASSIGN Expression { printf("SHR_ASSIGN\n"); }
-    | LvalueExpression SHL_ASSIGN Expression { printf("SHL_ASSIGN\n"); }
-    | LvalueExpression BAN_ASSIGN Expression { printf("BAN_ASSIGN\n"); }
-    | LvalueExpression BOR_ASSIGN Expression { printf("BOR_ASSIGN\n"); }
-    | LvalueExpression BXO_ASSIGN Expression { printf("BXO_ASSIGN\n"); }
-    | LvalueExpression INC_ASSIGN { printf("INC_ASSIGN\n"); }
-    | LvalueExpression DEC_ASSIGN { printf("DEC_ASSIGN\n"); }
+assignment_expression
+    : unary_expression VAL_ASSIGN expression { printf("EQL_ASSIGN\n"); }
+    | unary_expression ADD_ASSIGN expression { printf("ADD_ASSIGN\n"); }
+    | unary_expression SUB_ASSIGN expression { printf("SUB_ASSIGN\n"); }
+    | unary_expression MUL_ASSIGN expression { printf("MUL_ASSIGN\n"); }
+    | unary_expression DIV_ASSIGN expression { printf("DIV_ASSIGN\n"); }
+    | unary_expression REM_ASSIGN expression { printf("REM_ASSIGN\n"); }
+    | unary_expression SHR_ASSIGN expression { printf("SHR_ASSIGN\n"); }
+    | unary_expression SHL_ASSIGN expression { printf("SHL_ASSIGN\n"); }
+    | unary_expression BAN_ASSIGN expression { printf("BAN_ASSIGN\n"); }
+    | unary_expression BOR_ASSIGN expression { printf("BOR_ASSIGN\n"); }
+    | unary_expression BXO_ASSIGN expression { printf("BXO_ASSIGN\n"); }
+    | unary_expression INC_ASSIGN { printf("INC_ASSIGN\n"); }
+    | unary_expression DEC_ASSIGN { printf("DEC_ASSIGN\n"); }
 ;
 
 /* expression */
 
-ExpressionList
-    : ExpressionList ',' Expression { pushExpression(&$3); }
-    | Expression { pushExpression(&$1); }
-    | /* Empty expression list */
+expressions
+    : expressions ',' expression { pushExpression(&$3); }
+    | expression { pushExpression(&$1); }
+    |
 ;
 
-Expression 
-    : LogicOrExpression { $$ = $1; }
+expression 
+    : logical_or_expression { $$ = $1; }
 ;
 
-LogicOrExpression
-    : LogicOrExpression LOR LogicAndExpression { puts("LOR"); $$ = $3; }
-    | LogicAndExpression { $$ = $1; }
+logical_or_expression
+    : logical_or_expression LOR logical_and_expression { puts("LOR"); $$ = $3; }
+    | logical_and_expression { $$ = $1; }
 ;
 
-LogicAndExpression
-    : LogicAndExpression LAN BitwiseOrExpression { puts("LAN"); $$ = $3; }
-    | BitwiseOrExpression { $$ = $1; }
+logical_and_expression
+    : logical_and_expression LAN bitwise_or_expression { puts("LAN"); $$ = $3; }
+    | bitwise_or_expression { $$ = $1; }
 ;
 
-BitwiseOrExpression
-    : BitwiseOrExpression BOR BitwiseXorExpression { puts("BOR"); $$ = $3; }
-    | BitwiseXorExpression { $$ = $1; }
+bitwise_or_expression
+    : bitwise_or_expression BOR bitwise_xor_expression { puts("BOR"); $$ = $3; }
+    | bitwise_xor_expression { $$ = $1; }
 ;
 
-BitwiseXorExpression
-    : BitwiseXorExpression BXO BitwiseAndExpression { puts("BXO"); $$ = $3; }
-    | BitwiseAndExpression { $$ = $1; }
+bitwise_xor_expression
+    : bitwise_xor_expression BXO bitwise_and_expression { puts("BXO"); $$ = $3; }
+    | bitwise_and_expression { $$ = $1; }
 ;
 
-BitwiseAndExpression
-    : BitwiseAndExpression BAN EquExpression { puts("BAN"); $$ = $3; }
-    | EquExpression { $$ = $1; }
+bitwise_and_expression
+    : bitwise_and_expression BAN equality_expression { puts("BAN"); $$ = $3; }
+    | equality_expression { $$ = $1; }
 ;
 
-EquExpression
-    : EquExpression EQL RelationalExpression { puts("EQL"); $$ = $3; }
-    | EquExpression NEQ RelationalExpression { puts("NEQ"); $$ = $3; }
-    | RelationalExpression { $$ = $1; }
+equality_expression
+    : equality_expression EQL relational_expression { puts("EQL"); $$ = $3; }
+    | equality_expression NEQ relational_expression { puts("NEQ"); $$ = $3; }
+    | relational_expression { $$ = $1; }
 ;
 
-RelationalExpression
-    : RelationalExpression GTR ShiftExpression { puts("GTR"); $$ = $3; }
-    | RelationalExpression LES ShiftExpression { puts("LES"); $$ = $3; }
-    | RelationalExpression GEQ ShiftExpression { puts("GEQ"); $$ = $3; }
-    | RelationalExpression LEQ ShiftExpression { puts("LEQ"); $$ = $3; }
-    | ShiftExpression { $$ = $1; }
+relational_expression
+    : relational_expression GTR shift_expression { puts("GTR"); $$ = $3; }
+    | relational_expression LES shift_expression { puts("LES"); $$ = $3; }
+    | relational_expression GEQ shift_expression { puts("GEQ"); $$ = $3; }
+    | relational_expression LEQ shift_expression { puts("LEQ"); $$ = $3; }
+    | shift_expression { $$ = $1; }
 ;
 
-ShiftExpression
-    : ShiftExpression SHR AdditiveExpression { puts("SHR"); $$ = $3; }
-    | AdditiveExpression { $$ = $1; }
+shift_expression
+    : shift_expression SHR additive_expression { puts("SHR"); $$ = $3; }
+    | additive_expression { $$ = $1; }
 
-AdditiveExpression
-    : AdditiveExpression ADD MultiExpression { puts("ADD"); $$ = $3; }
-    | AdditiveExpression SUB MultiExpression { puts("SUB"); $$ = $3; }
-    | MultiExpression { $$ = $1; }
+additive_expression
+    : additive_expression ADD multiplicative_expression { puts("ADD"); $$ = $3; }
+    | additive_expression SUB multiplicative_expression { puts("SUB"); $$ = $3; }
+    | multiplicative_expression { $$ = $1; }
 ;
 
-MultiExpression
-    : MultiExpression MUL UnaryExpression { puts("MUL"); $$ = $3; }
-    | MultiExpression DIV UnaryExpression { puts("DIV"); $$ = $3; }
-    | MultiExpression REM UnaryExpression { puts("REM"); $$ = $3; }
-    | UnaryExpression { $$ = $1; }
+multiplicative_expression
+    : multiplicative_expression MUL unary_expression { puts("MUL"); $$ = $3; }
+    | multiplicative_expression DIV unary_expression { puts("DIV"); $$ = $3; }
+    | multiplicative_expression REM unary_expression { puts("REM"); $$ = $3; }
+    | unary_expression { $$ = $1; }
 ;
 
-UnaryExpression
-    : SUB UnaryExpression { puts("NEG"); $$ = $2; }
-    | NOT UnaryExpression { puts("NOT"); $$ = $2; }
-    | LogicalNotExpression { $$ = $1; }
+unary_expression
+    : SUB unary_expression { puts("NEG"); $$ = $2; }
+    | NOT unary_expression { puts("NOT"); $$ = $2; }
+    | logical_not_expression { $$ = $1; }
 ;
 
-LogicalNotExpression
-    : BNT LogicalNotExpression { puts("BNT"); $$ = $2; }
-    | BAN LogicalNotExpression { puts("BAN"); $$ = $2; }
-    | PrimaryExpression { $$ = $1; }
+logical_not_expression
+    : BNT unary_expression { puts("BNT"); $$ = $2; }
+    | BAN unary_expression { puts("BAN"); $$ = $2; }
+    | primary_expression { $$ = $1; }
 ;
 
-PrimaryExpression
-    : '(' Expression ')' { $$ = $2; }
-    | ScalarExpression
-    | STR_LIT { printf("STR_LIT \"%s\"\n", $1); $$.type = OBJECT_TYPE_STR; }
-    | LvalueExpression
-;
-
-ScalarExpression
-    : INT_LIT {
+primary_expression
+    : '(' expression ')' { $$ = $2; }
+    | INT_LIT {
       printf("INT_LIT %d\n", $1);
       $$.type = OBJECT_TYPE_INT; 
-      $$.value = *(uint64_t*)&$1;
+      $$.value = *(unsigned long long*)&$1;
     }
     | FLOAT_LIT {
       printf("FLOAT_LIT %f\n", $1);
       $$.type = OBJECT_TYPE_FLOAT;
-      $$.value = *(uint64_t*)&$1;
+      $$.value = *(unsigned long long*)&$1;
     }
     | BOOL_LIT {
       printf("BOOL_LIT %s\n", $1 ? "TRUE" : "FALSE");
       $$.type = OBJECT_TYPE_BOOL;
-      $$.value = *(uint64_t*)&$1;
+      $$.value = *(unsigned long long*)&$1;
     }
-;
-
-LvalueExpression
-    : IDENT { 
+    | STR_LIT { printf("STR_LIT \"%s\"\n", $1); $$.type = OBJECT_TYPE_STR; }
+    | IDENT { 
       Object *obj = findVariable($1);
       if (obj == NULL) {
         printf("IDENT (name=%s, address=-1)\n", $1);
@@ -292,15 +279,18 @@ LvalueExpression
         $$.type = obj->type;
       }
     }
-    | IDENT '[' Expression ']' {
+    | IDENT '[' expression ']' {
       Object *obj = findVariable($1);
       printf("IDENT (name=%s, address=%d)\n", $1, obj->symbol->addr);
       $$.type = obj->type;
     }
-    | IDENT '[' Expression ']' '[' Expression ']' { 
+    | IDENT '[' expression ']' '[' expression ']' { 
       Object *obj = findVariable($1);
       printf("IDENT (name=%s, address=%d)\n", $1, obj->symbol->addr);
       $$.type = obj->type;
     }
+;
+
+
 %%
 /* C code section */
