@@ -53,13 +53,11 @@ void pushMainFunctionParm() {
 ObjectType currentInitVarType;
 
 void setCurrentInitVarType(ObjectType variableType) {
-  currentInitVarType = variableType;
-  for (int i = 0; i < symbolTable[scopeLevel].size; i++) {
-    Object *x = symbolTable[scopeLevel].objects[i];
-    if (x->type == OBJECT_TYPE_UNDEFINED) {
-      x->type = variableType;
-    }
+  if (variableType == OBJECT_TYPE_AUTO) {
+    // unsupported
+    abort();
   }
+  currentInitVarType = variableType;
 }
 
 void addVarToSymbolTable(char *variableName, ObjectType variableType) {
@@ -84,6 +82,10 @@ void addVarToSymbolTable(char *variableName, ObjectType variableType) {
 
   printf("> Insert `%s` (addr: %d) to scope level %d\n", variableName,
          !scopeLevel ? -1 : variableAddress++, scopeLevel);
+}
+
+void addVarToSymbolTable(char *variableName) {
+  addVarToSymbolTable(variableName, currentInitVarType);
 }
 
 void pushScope() {

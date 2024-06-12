@@ -97,7 +97,7 @@ statement
 ;
 
 declaration
-    : VARIABLE_T init_declaration_list { setCurrentInitVarType($<var_type>1);  };
+    : VARIABLE_T { setCurrentInitVarType($<var_type>1); } init_declaration_list;
 
 init_declaration_list
     : init_declaration_list ',' init_declarator
@@ -105,7 +105,7 @@ init_declaration_list
 
 
 init_declarator
-    : IDENT { addVarToSymbolTable($<s_var>1, OBJECT_TYPE_UNDEFINED); }
+    : IDENT { addVarToSymbolTable($<s_var>1); }
     | IDENT VAL_ASSIGN expression { addVarToSymbolTable($<s_var>1, $3.type); }
 ;
 
