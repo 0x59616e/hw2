@@ -7,7 +7,7 @@
 
 using namespace std;
 
-const char *objectTypeName[] = {
+const char *typeSpecifier[] = {
     "undefined", "auto",   "void", "char",   "int",      "long",
     "float",     "double", "bool", "string", "function",
 };
@@ -25,9 +25,7 @@ typedef struct {
 
 SymbolTable symbolTable[100];
 
-/* queue<string> stdoutQueue; */
 Queue stdoutQueue;
-Queue expressionQueue;
 Queue functionParmQueue;
 
 /* queue<Object *> expressionQueue; */
@@ -49,18 +47,13 @@ ObjectType variableIdentType;
 void pushMainFunctionParm() {
   functionParmQueue.data[functionParmQueue.tail++] =
       new ObjectPair{OBJECT_TYPE_FUNCTION, true};
-  insertVariable((char *)"argv", OBJECT_TYPE_STR);
+  addVarToSymbolTable((char *)"argv", OBJECT_TYPE_STR);
 }
 
-void pushExpression(Object *out) {
-  expressionQueue.data[expressionQueue.tail++] = (void *)out;
-}
+ObjectType currentInitVarType;
 
-Object *popExpression() {
-  return (Object *)expressionQueue.data[expressionQueue.head++];
-}
-
-void insertVariable(ObjectType variableType) {
+void setCurrentInitVarType(ObjectType variableType) {
+  currentInitVarType = variableType;
   for (int i = 0; i < symbolTable[scopeLevel].size; i++) {
     Object *x = symbolTable[scopeLevel].objects[i];
     if (x->type == OBJECT_TYPE_UNDEFINED) {
@@ -69,7 +62,7 @@ void insertVariable(ObjectType variableType) {
   }
 }
 
-void insertVariable(char *variableName, ObjectType variableType) {
+void addVarToSymbolTable(char *variableName, ObjectType variableType) {
   SymbolData *symbolData = new SymbolData{
       .name = variableName,
       .index = symbolTable[scopeLevel].size,
@@ -105,7 +98,7 @@ void dumpScope() {
   for (int i = 0; i < symbolTable[scopeLevel].size; i++) {
     Object *x = symbolTable[scopeLevel].objects[i];
     printf("%-9d %-19s %-9s %-9ld %-9d %-10s\n", x->symbol->index,
-           x->symbol->name, objectTypeName[x->type], x->symbol->addr,
+           x->symbol->name, typeSpecifier[x->type], x->symbol->addr,
            x->symbol->lineno, x->symbol->func_sig);
   }
 
@@ -116,44 +109,11 @@ void dumpScope() {
 
 void createMainFunction() {
   printf("func: main\n");
-  insertVariable((char *)"main", OBJECT_TYPE_FUNCTION);
+  addVarToSymbolTable((char *)"main", OBJECT_TYPE_FUNCTION);
   Object *tmp = symbolTable[0].objects[symbolTable[0].size - 1];
   tmp->tmpType = OBJECT_TYPE_FUNCTION;
   char *funcProto = (char *)"([Ljava/lang/String;)I";
   strcpy(tmp->symbol->func_sig, funcProto);
-}
-
-void debugPrintInst(char instc, Object *a, Object *b, Object *out) {}
-
-bool objectExpression(char op, Object *dest, Object *val, Object *out) {
-  return false;
-}
-
-bool objectExpBinary(char op, Object *a, Object *b, Object *out) {
-  return false;
-}
-
-bool objectExpBoolean(char op, Object *a, Object *b, Object *out) {
-  return false;
-}
-
-bool objectExpAssign(char op, Object *dest, Object *val, Object *out) {
-  return false;
-}
-
-bool objectValueAssign(Object *dest, Object *val, Object *out) { return false; }
-
-bool objectNotBinaryExpression(Object *dest, Object *out) { return false; }
-
-bool objectNegExpression(Object *dest, Object *out) { return false; }
-bool objectNotExpression(Object *dest, Object *out) { return false; }
-
-bool objectIncAssign(Object *a, Object *out) { return false; }
-
-bool objectDecAssign(Object *a, Object *out) { return false; }
-
-bool objectCast(ObjectType variableType, Object *dest, Object *out) {
-  return false;
 }
 
 Object *findVariable(char *variableName) {
@@ -169,10 +129,10 @@ Object *findVariable(char *variableName) {
 }
 
 void pushFunInParm(Object *variable) {
-  stdoutQueue.data[stdoutQueue.tail++] = (void *)objectTypeName[variable->type];
+  stdoutQueue.data[stdoutQueue.tail++] = (void *)typeSpecifier[variable->type];
 }
 
-void stdoutPrint() {
+void dumpToStdout() {
   printf("cout ");
 
   while (stdoutQueue.head != stdoutQueue.tail) {

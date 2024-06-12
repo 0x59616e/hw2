@@ -19,8 +19,9 @@ void pushMainFunctionParm();
 
 void pushExpression(Object *out);
 Object *popExpression();
-void insertVariable(ObjectType variableType);
-void insertVariable(char *variableName, ObjectType variableType);
+void setCurrentInitVarType(ObjectType variableType);
+void addVarToSymbolTable(char *variableName, ObjectType variableType);
+void addVarToSymbolTable(char *variableName);
 void pushFunInParm(Object *variable);
 void createFunction(ObjectType variableType, char *funcName);
 void createMainFunction();
@@ -40,6 +41,6 @@ bool objectIncAssign(Object *a, Object *out);
 bool objectDecAssign(Object *a, Object *out);
 bool objectCast(ObjectType variableType, Object *dest, Object *out);
 
-void stdoutPrint();
+void dumpToStdout();
 
 #endif

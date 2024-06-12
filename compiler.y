@@ -28,12 +28,11 @@
 /* Token with return, which need to sepcify type */
 %token <var_type> VARIABLE_T
 %token <s_var> IDENT
-
-
 %token <b_var> BOOL_LIT
 %token <i_var> INT_LIT
 %token <f_var> FLOAT_LIT
 %token <s_var> STR_LIT
+
 /* Nonterminal with return, which need to sepcify type */
 %type <object_val> expression logical_or_expression logical_and_expression bitwise_or_expression bitwise_xor_expression bitwise_and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression unary_expression logical_not_expression primary_expression
 
@@ -83,39 +82,22 @@ block_item_list
 ;
 
 block_item
-    : StmtList
+    : statement
 ;
 
 /* Scope */
-StmtList 
-    : StmtList Stmt
-    | Stmt
-;
-Stmt
-    : ';' {printf(";;;;\n");}
-    | GeneralStmt ';'
+
+statement
+    : ';'
+    | COUT CoutParmListStmt { dumpToStdout(); }
+    | RETURN expression { puts("RETURN"); }
+    | RETURN { puts("RETURN"); }
     | assignment_expression ';'
     | declaration ';'
-    | while_statement
-    | for_statement
-;
-
-while_statement
-    : WHILE { puts("WHILE"); } '(' expression ')' { pushScope(); } '{' StmtList '}' { dumpScope();}
-;
-
-for_statement
-    : FOR { puts("FOR"); pushScope(); } '(' for_init_statement ';' expression ';' assignment_expression ')' '{' StmtList '}' { dumpScope();}
-
-
-for_init_statement
-    : declaration
-    | assignment_expression
-    | 
 ;
 
 declaration
-    : VARIABLE_T init_declaration_list { insertVariable($<var_type>1); };
+    : VARIABLE_T init_declaration_list { setCurrentInitVarType($<var_type>1);  };
 
 init_declaration_list
     : init_declaration_list ',' init_declarator
@@ -123,31 +105,10 @@ init_declaration_list
 
 
 init_declarator
-    : IDENT { insertVariable($<s_var>1, OBJECT_TYPE_UNDEFINED); }
-    | IDENT VAL_ASSIGN expression { insertVariable($<s_var>1, $3.type); }
-    | IDENT '[' primary_expression ']' '[' primary_expression ']' {
-      insertVariable($<s_var>1, OBJECT_TYPE_UNDEFINED);
-    }
-    | IDENT '[' primary_expression ']' VAL_ASSIGN '{' expressions '}' {
-      int counter = 0;
-      ObjectType type = OBJECT_TYPE_UNDEFINED;
-      Object *obj = NULL;
-      while (obj = popExpression()) {
-        type = obj->type > type ? obj->type : type;
-        counter++;
-      }
-      printf("create array: %d\n", counter);
-      insertVariable($<s_var>1, type);
-    }
+    : IDENT { addVarToSymbolTable($<s_var>1, OBJECT_TYPE_UNDEFINED); }
+    | IDENT VAL_ASSIGN expression { addVarToSymbolTable($<s_var>1, $3.type); }
 ;
 
-GeneralStmt
-    : COUT CoutParmListStmt { stdoutPrint(); }
-    | RETURN expression { puts("RETURN"); }
-    | RETURN { puts("RETURN"); }
-    | BREAK { puts("BREAK"); }
-    | CONTINUE { puts("CONTINUE"); }
-;
 
 CoutParmListStmt
     : CoutParmListStmt SHL expression { pushFunInParm(&$<object_val>3); }
@@ -278,16 +239,6 @@ primary_expression
         printf("IDENT (name=%s, address=%d)\n", $1, obj->symbol->addr);
         $$.type = obj->type;
       }
-    }
-    | IDENT '[' expression ']' {
-      Object *obj = findVariable($1);
-      printf("IDENT (name=%s, address=%d)\n", $1, obj->symbol->addr);
-      $$.type = obj->type;
-    }
-    | IDENT '[' expression ']' '[' expression ']' { 
-      Object *obj = findVariable($1);
-      printf("IDENT (name=%s, address=%d)\n", $1, obj->symbol->addr);
-      $$.type = obj->type;
     }
 ;
 
