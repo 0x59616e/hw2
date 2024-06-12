@@ -26,14 +26,6 @@ typedef struct {
 SymbolTable symbolTable[100];
 
 Queue stdoutQueue;
-Queue functionParmQueue;
-
-/* queue<Object *> expressionQueue; */
-typedef struct ObjectPair {
-  ObjectType type;
-  bool isArray;
-} ObjectPair;
-/* queue<pair<ObjectType, bool>> functionParmQueue; */
 
 char *yyInputFileName;
 bool compileError;
@@ -45,8 +37,6 @@ int variableAddress = 0;
 ObjectType variableIdentType;
 
 void pushMainFunctionParm() {
-  functionParmQueue.data[functionParmQueue.tail++] =
-      new ObjectPair{OBJECT_TYPE_FUNCTION, true};
   addVarToSymbolTable((char *)"argv", OBJECT_TYPE_STR);
 }
 
